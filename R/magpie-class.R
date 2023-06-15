@@ -324,9 +324,39 @@ setMethod("[", #nolint
 )
 
 #' @exportMethod [<-
-setMethod("[<-", #nolint
+setMethod(
+  "[<-", #nolint
   signature(x = "magpie"),
   function(x, i, j, k, value, pmatch = FALSE, dim = NULL) {
+
+    if ('..1' != as.character(match.call()[['k']])
+        && (missing(i) || length(i) != length(x))) {
+      if (missing(i)) {
+        text <- paste('Assignment without fully specified indices is',
+                      'dangerous!')
+        if (missing(j)) {
+          text <- paste(text, 'Use `magpie[,,] <-` never `magpie[] <-` or',
+                        '`magpie[,] <-`.')
+        }
+        else {
+          text <- paste(text, 'Use `magpie[,j,] <-` never `magpie[,j] <-`.')
+        }
+      }
+      else if (length(i) != length(x)) {
+        text <- paste('Assignment with indices shorter that the object is',
+                      'dangegous!')
+      }
+
+      if ('error' == getOption('_MAGCLASS_UNDERSPECIFIED_ASSIGNMENT_', '')) {
+        stop(text)
+      }
+      else if ('warning' == getOption('_MAGCLASS_UNDERSPECIFIED_ASSIGNMENT_',
+                                      '')) {
+        warning(text)
+        traceback(0)
+      }
+    }
+
     if (!is.null(dim)) {
       if (!is.element(dim, 1:3)) stop("Invalid dim selection (allowed: 1, 2 or 3)")
       if (!missing(j) || (!missing(k) && !missing(value))) {
